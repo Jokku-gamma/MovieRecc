@@ -20,6 +20,9 @@ similarity=None
 unique_genres=[]
 def load_data():
     global movies,similarity,unique_genres
+    print(f"Connecting to container: {CONTAINER_NAME}")  # Add print
+    print(f"Downloading data file: {DATA_FILENAME}")  # Add print
+    print(f"Downloading similarity file: {SIMILARITY_FILENAME}")
     if not STORAGE_ACCOUNT_NAME or not STORAGE_ACCOUNT_KEY or not CONTAINER_NAME or not DATA_FILENAME or not SIMILARITY_FILENAME:
         print("Error in azure connection config variables")
         return False
