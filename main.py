@@ -11,23 +11,15 @@ app=Flask(__name__)
 STORAGE_ACCOUNT_NAME=os.environ.get("AZURE_STORAGE_ACCOUNT_NAME")
 STORAGE_ACCOUNT_KEY=os.environ.get("STORAGE_ACCOUNT_KEY")
 CONTAINER_NAME=os.environ.get("CONTAINER_NAME")
-SIMILARITY_FILENAME=os.environ.get("SIMILARITY_FILENAME")
 DATA_FILENAME=os.environ.get("DATA_FILENAME")
+SIMILARITY_FILENAME=os.environ.get("SIMILARITY_FILENAME")
 STORAGE_CONNECTION_STRING=os.environ.get("AZURE_STORAGE_CONNECTION_STRING")
 
 movies=None
 similarity=None
 unique_genres=[]
-data_loaded=False
-
-def load_data_from_azure():
-    global movies,similarity,unique_genres,data_loaded
-    if data_loaded:
-        print("Data already loaded")
-        return True
-    print(f"Connecting to container :{CONTAINER_NAME}")
-    print(f"Downloading data file :{DATA_FILENAME}")
-    print(f"Downloading similarity file :{SIMILARITY_FILENAME}")
+def load_data():
+    global movies,similarity,unique_genres
     if not STORAGE_ACCOUNT_NAME or not STORAGE_ACCOUNT_KEY or not CONTAINER_NAME or not DATA_FILENAME or not SIMILARITY_FILENAME:
         print("Error in azure connection config variables")
         return False
@@ -49,17 +41,18 @@ def load_data_from_azure():
 
         genre_columns=[col for col in movies.columns if col not in ['movieId','title','org_genres']]
         unique_genres=genre_columns
-        print("Data and similarity matrix loaded from Azure")
+        print("Data and Similarity matrix loaded from Azure")
         return True
     except Exception as e:
-        print(e)
+        print(e)        
         return False
     
+with app.app_context():
+    if not load_data():
+        pass
+
 def reccomend_movies(genre,top_n=10):
-    if not data_loaded:
-        if not load_data_from_azure():
-            return []
-    if movies in None or similarity is None:
+    if movies is None or similarity is None:
         return []
     genre_movies=movies[movies[genre]==1]
     if genre_movies.empty:
@@ -72,15 +65,9 @@ def reccomend_movies(genre,top_n=10):
 def genre_recc():
     genre=request.args.get('genre')
     if not genre:
-        return jsonify({"error":"Pls provide a genre parameter"}),400
-    if not data_loaded:
-        if not load_data_from_azure():
-            return jsonify({"error":"Failed to load data from Azure"}),500
-        recc=reccomend_movies(genre)
-        if not recc:
-            return jsonify({"message":"No reccomendations found for this genre or data not loaded"}),404
-        return jsonify(recc)
-    
+        return jsonify({"error":"Pls provide a 'genre' parameter"}),400
+    recc=reccomend_movies(genre)
+    return jsonify(recc)
+
 if __name__=="__main__":
     app.run(debug=False)
-    
