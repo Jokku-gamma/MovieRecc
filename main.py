@@ -69,5 +69,10 @@ def genre_recc():
     recc=reccomend_movies(genre)
     return jsonify(recc)
 
+@app.route('/genres', methods=['GET'])
+def get_unique_genres():
+    if not unique_genres:
+        return jsonify({"error": "Genre data not loaded or available."}), 500
+    return jsonify({"genres": unique_genres})
 if __name__=="__main__":
     app.run(debug=False)
